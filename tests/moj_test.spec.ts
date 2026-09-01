@@ -28,6 +28,15 @@ test("otvori stranicu", async ({ page }) => {
 
   await page.pause();
   ////////////////////////////////////////////////////////////////////////////////////
+
+  const numberOfPagesText = await page
+    .getByTestId("footer-page-item")
+    .getByTestId("page-item")
+    .last()
+    .innerText();
+
+  const numberOfPages = Number(numberOfPagesText);
+
   const cards = page.getByTestId("product-container").filter({
     has: page.getByTestId("product-card-brand"),
   });
@@ -35,17 +44,38 @@ test("otvori stranicu", async ({ page }) => {
   await cards.first().waitFor({
     state: "visible",
   });
-
+  var totalNumberOfProducts: number = 1;
   const cardCount = await cards.count();
+  for (let k = 0; k < numberOfPages; k++) {
+    for (let i = 0; i < cardCount; i++) {
+      const card = cards.nth(i);
 
-  for (let i = 0; i < cardCount; i++) {
-    const card = cards.nth(i);
+      await card.scrollIntoViewIfNeeded();
 
-    await card.scrollIntoViewIfNeeded();
+      const productBrand = await card
+        .getByTestId("product-card-brand")
+        .innerText();
+      const productName = await card
+        .getByTestId("product-card-name")
+        .innerText();
+      const productPrice = await card
+        .getByTestId("price-component")
+        .innerText();
 
-    const brand = await card.getByTestId("product-card-brand").innerText();
-
-    console.log(i, brand);
+      console.log(
+        totalNumberOfProducts,
+        productBrand,
+        "-",
+        productName,
+        " - price: ",
+        productPrice,
+      );
+      totalNumberOfProducts++;
+    }
+    await page
+      .getByTestId("footer-page-item")
+      .getByTestId("icon-regular-chevron-right")
+      .click();
   }
 
   await page.pause();
