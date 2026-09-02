@@ -41,11 +41,7 @@ test("otvori stranicu", async ({ page }) => {
     has: page.getByTestId("product-card-brand"),
   });
 
-  await cards.first().waitFor({
-    state: "visible",
-  });
-
-  var totalNumberOfProducts: number = 1;
+  //var totalNumberOfProducts: number = 0;
   const cardCount = await cards.count();
 
   const products: {
@@ -57,6 +53,10 @@ test("otvori stranicu", async ({ page }) => {
   // Fetch all from single page, go through all pages
   for (let k = 0; k < 2; k++) {
     // ^ replace 2 with numberOfPages to get all ^
+    await cards.first().waitFor({
+      state: "visible",
+    });
+    const cardCount = await cards.count();
     for (let i = 0; i < cardCount; i++) {
       const card = cards.nth(i);
 
@@ -78,7 +78,7 @@ test("otvori stranicu", async ({ page }) => {
           url: new URL(href, page.url()).href,
         });
       }
-      totalNumberOfProducts++;
+      //totalNumberOfProducts++;
     }
     await page
       .getByTestId("footer-page-item")
