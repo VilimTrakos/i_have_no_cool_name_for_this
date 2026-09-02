@@ -86,5 +86,40 @@ test("otvori stranicu", async ({ page }) => {
       .click();
   }
 
+  // Open individual URl and fetch ML + price values
+
+  type ProductVariant = {
+    volume: string;
+    price: string;
+    couponPrice: string | null;
+    couponCode: string | null;
+    url: string;
+  };
+
+  type ProductDetails = {
+    brand: string;
+    name: string;
+    url: string;
+    variants: ProductVariant[];
+  };
+
+  const detailPage = await page.context().newPage();
+
+  for (const product of products) {
+    await detailPage.goto(product.url, {
+      waitUntil: "domcontentloaded",
+    });
+
+    const currentProduct: ProductDetails = {
+      brand: product.brand,
+      name: product.name,
+      url: product.url,
+      variants: [],
+    };
+    await detailPage.pause();
+  }
+
+  console.log("products", products[1].brand, products[1].name, products[1].url);
+
   await page.pause();
 });
