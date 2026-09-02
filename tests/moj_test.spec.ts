@@ -44,9 +44,19 @@ test("otvori stranicu", async ({ page }) => {
   await cards.first().waitFor({
     state: "visible",
   });
+
   var totalNumberOfProducts: number = 1;
   const cardCount = await cards.count();
-  for (let k = 0; k < numberOfPages; k++) {
+
+  const products: {
+    brand: string;
+    name: string;
+    url: string;
+  }[] = [];
+
+  // Fetch all from single page, go through all pages
+  for (let k = 0; k < 2; k++) {
+    // ^ replace 2 with numberOfPages to get all ^
     for (let i = 0; i < cardCount; i++) {
       const card = cards.nth(i);
 
@@ -58,18 +68,16 @@ test("otvori stranicu", async ({ page }) => {
       const productName = await card
         .getByTestId("product-card-name")
         .innerText();
-      const productPrice = await card
-        .getByTestId("price-component")
-        .innerText();
 
-      console.log(
-        totalNumberOfProducts,
-        productBrand,
-        "-",
-        productName,
-        " - price: ",
-        productPrice,
-      );
+      const href = await card.locator("a[href]").first().getAttribute("href");
+
+      if (href) {
+        products.push({
+          brand: productBrand,
+          name: productName,
+          url: new URL(href, page.url()).href,
+        });
+      }
       totalNumberOfProducts++;
     }
     await page
