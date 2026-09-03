@@ -3,123 +3,185 @@ import { test, expect } from "@playwright/test";
 import { handleCookies, menuSelector } from "./helpers";
 
 test("otvori stranicu", async ({ page }) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(Navigator.prototype, "webdriver", {
-      get: () => false,
-      configurable: true,
-    });
-  });
-
-  await page.goto("https://www.notino.hr/", {
-    waitUntil: "domcontentloaded",
-  });
-
-  await handleCookies(page);
-
-  await menuSelector(
-    page,
-    '[data-cypress="mainMenu-Muškarci"]',
-    "Muški parfemi",
-  );
-
-  await page.getByTestId("product-container").first().waitFor({
-    state: "visible",
-  });
-
-  await page.pause();
-  ////////////////////////////////////////////////////////////////////////////////////
-
-  const numberOfPagesText = await page
-    .getByTestId("footer-page-item")
-    .getByTestId("page-item")
-    .last()
-    .innerText();
-
-  const numberOfPages = Number(numberOfPagesText);
-
-  const cards = page.getByTestId("product-container").filter({
-    has: page.getByTestId("product-card-brand"),
-  });
-
-  //var totalNumberOfProducts: number = 0;
-  const cardCount = await cards.count();
-
-  const products: {
-    brand: string;
-    name: string;
-    url: string;
-  }[] = [];
-
-  // Fetch all from single page, go through all pages
-  for (let k = 0; k < 2; k++) {
-    // ^ replace 2 with numberOfPages to get all ^
-    await cards.first().waitFor({
-      state: "visible",
-    });
-    const cardCount = await cards.count();
-    for (let i = 0; i < cardCount; i++) {
-      const card = cards.nth(i);
-
-      await card.scrollIntoViewIfNeeded();
-
-      const productBrand = await card
-        .getByTestId("product-card-brand")
-        .innerText();
-      const productName = await card
-        .getByTestId("product-card-name")
-        .innerText();
-
-      const href = await card.locator("a[href]").first().getAttribute("href");
-
-      if (href) {
-        products.push({
-          brand: productBrand,
-          name: productName,
-          url: new URL(href, page.url()).href,
+    await page.addInitScript(() => {
+        Object.defineProperty(Navigator.prototype, "webdriver", {
+            get: () => false,
+            configurable: true,
         });
-      }
-      //totalNumberOfProducts++;
-    }
-    await page
-      .getByTestId("footer-page-item")
-      .getByTestId("icon-regular-chevron-right")
-      .click();
-  }
-
-  // Open individual URl and fetch ML + price values
-
-  type ProductVariant = {
-    volume: string;
-    price: string;
-    couponPrice: string | null;
-    couponCode: string | null;
-    url: string;
-  };
-
-  type ProductDetails = {
-    brand: string;
-    name: string;
-    url: string;
-    variants: ProductVariant[];
-  };
-
-  const detailPage = await page.context().newPage();
-
-  for (const product of products) {
-    await detailPage.goto(product.url, {
-      waitUntil: "domcontentloaded",
     });
 
-    const currentProduct: ProductDetails = {
-      brand: product.brand,
-      name: product.name,
-      url: product.url,
-      variants: [],
+    await page.goto("https://www.notino.hr/", {
+        waitUntil: "domcontentloaded",
+    });
+
+    await handleCookies(page);
+
+    await menuSelector(
+        page,
+        '[data-cypress="mainMenu-Muškarci"]',
+        "Muški parfemi",
+    );
+
+    await page.getByTestId("product-container").first().waitFor({
+        state: "visible",
+    });
+
+    await page.pause();
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    const numberOfPagesText = await page
+        .getByTestId("footer-page-item")
+        .getByTestId("page-item")
+        .last()
+        .innerText();
+
+    const numberOfPages = Number(numberOfPagesText);
+
+    const cards = page.getByTestId("product-container").filter({
+        has: page.getByTestId("product-card-brand"),
+    });
+
+    //var totalNumberOfProducts: number = 0;
+    const cardCount = await cards.count();
+
+    const products: {
+        brand: string;
+        name: string;
+        url: string;
+    }[] = [];
+
+    // Fetch all from single page, go through all pages
+    for (let k = 0; k < 2; k++) {
+        // ^ replace 2 with numberOfPages to get all ^
+        await cards.first().waitFor({
+            state: "visible",
+        });
+        const cardCount = await cards.count();
+        for (let i = 0; i < cardCount; i++) {
+            const card = cards.nth(i);
+
+            await card.scrollIntoViewIfNeeded();
+
+            const productBrand = await card
+                .getByTestId("product-card-brand")
+                .innerText();
+            const productName = await card
+                .getByTestId("product-card-name")
+                .innerText();
+
+            const href = await card
+                .locator("a[href]")
+                .first()
+                .getAttribute("href");
+
+            if (href) {
+                products.push({
+                    brand: productBrand,
+                    name: productName,
+                    url: new URL(href, page.url()).href,
+                });
+            }
+            //totalNumberOfProducts++;
+        }
+        await page
+            .getByTestId("footer-page-item")
+            .getByTestId("icon-regular-chevron-right")
+            .click();
+    }
+
+    // Open individual URl and fetch ML + price values
+
+    type ProductVariant = {
+        volume: string;
+        price: string;
+        couponPrice: string | null;
+        couponCode: string | null;
+        url: string;
     };
-    await detailPage.pause();
-  }
 
-  console.log("products", products[1].brand, products[1].name, products[1].url);
+    type ProductDetails = {
+        brand: string;
+        name: string;
+        url: string;
+        variants: ProductVariant[];
+    };
 
-  await page.pause();
+    const detailPage = await page.context().newPage();
+
+    for (const product of products) {
+        // open product URL
+        await detailPage.goto(product.url, {
+            waitUntil: "domcontentloaded",
+        });
+
+        const currentProduct: ProductDetails = {
+            brand: product.brand,
+            name: product.name,
+            url: product.url,
+            variants: [],
+        };
+
+        //Some have first some have second name for a box with variants for some reason ...
+        const variantContainers = detailPage.locator(
+            '[data-testid="pd-variants-thumbnail"]:visible, ' +
+                '[data-testid="pd-variants-tile"]:visible',
+        );
+
+        const variantCards = variantContainers.locator("li"); //Get all variants visible on page
+        const variantCount = await variantCards.count();
+        // console.log(`${product.brand} ${product.name}: ${variantCount} varijanti`);
+
+        for (let i = 0; i < variantCount; i++) {
+            const variantCard = variantCards.nth(i);
+
+            const href = await variantCard
+                .locator("a[href]")
+                .first()
+                .getAttribute("href");
+            if (!href) {
+                continue;
+            }
+            const variantUrl = new URL(href, detailPage.url()).href;
+            const hasCornerProductLabel =
+                (await variantCard
+                    .getByTestId("corner-product-label")
+                    .count()) > 0;
+
+            const hasPercentageOff =
+                (await variantCard
+                    .getByTestId("icon-regular-percent")
+                    .count()) > 0;
+            const hasRegularFreeDelivery =
+                (await variantCard
+                    .getByTestId("icon-regular-delivery")
+                    .count()) > 0;
+            if (!hasCornerProductLabel) {
+                // Nema kupona ni akcije.
+                console.log("Nema niti popusta niti kupona");
+                // Uzmi ML i cijenu direktno iz variantCarda.
+            } else if (hasPercentageOff) {
+                // Vremenski ograničena cijena.
+                console.log("Ima popusta");
+                // Uzmi ML i cijenu direktno iz variantCarda
+                // i dodaj napomenu da je cijena vremenski ograničena.
+            } else if (hasRegularFreeDelivery) {
+                console.log("Besplatna dostava");
+            } else {
+                // Postoji corner-product-label, ali nema percent ikone:
+                console.log("Ima kupona");
+                // riječ je o kuponu pa otvori varijantu.
+            }
+
+            await detailPage.pause();
+        }
+    }
+
+    console.log(
+        "products",
+        products[1].brand,
+        products[1].name,
+        products[1].url,
+    );
+
+    await page.pause();
 });
