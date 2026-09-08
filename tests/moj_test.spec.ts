@@ -127,61 +127,37 @@ test("otvori stranicu", async ({ page }) => {
                 '[data-testid="pd-variants-tile"]:visible',
         );
 
-        const variantCards = variantContainers.locator("li"); //Get all variants visible on page
+        const variantCards = variantContainers.locator("li");
         const variantCount = await variantCards.count();
+
+        const variantUrls: string[] = [];
         // console.log(`${product.brand} ${product.name}: ${variantCount} varijanti`);
 
         for (let i = 0; i < variantCount; i++) {
             const variantCard = variantCards.nth(i);
-
             const href = await variantCard
                 .locator("a[href]")
                 .first()
                 .getAttribute("href");
+
             if (!href) {
                 continue;
             }
+
             const variantUrl = new URL(href, detailPage.url()).href;
-            const hasCornerProductLabel =
-                (await variantCard
-                    .getByTestId("corner-product-label")
-                    .count()) > 0;
-
-            const hasPercentageOff =
-                (await variantCard
-                    .getByTestId("icon-regular-percent")
-                    .count()) > 0;
-            const hasRegularFreeDelivery =
-                (await variantCard
-                    .getByTestId("icon-regular-delivery")
-                    .count()) > 0;
-            if (!hasCornerProductLabel) {
-                // Nema kupona ni akcije.
-                console.log("Nema niti popusta niti kupona");
-                // Uzmi ML i cijenu direktno iz variantCarda.
-            } else if (hasPercentageOff) {
-                // Vremenski ograničena cijena.
-                console.log("Ima popusta");
-                // Uzmi ML i cijenu direktno iz variantCarda
-                // i dodaj napomenu da je cijena vremenski ograničena.
-            } else if (hasRegularFreeDelivery) {
-                console.log("Besplatna dostava");
-            } else {
-                // Postoji corner-product-label, ali nema percent ikone:
-                console.log("Ima kupona");
-                // riječ je o kuponu pa otvori varijantu.
-            }
-
-            await detailPage.pause();
+            variantUrls.push(variantUrl);
+        }
+        // Ako nema variantnih kartica, osnovni proizvod je jedina varijanta
+        if (variantUrls.length === 0) {
+            variantUrls.push(product.url);
+        }
+        for (const variantUrl of variantUrls) {
+            await detailPage.goto(variantUrl, {
+                waitUntil: "domcontentloaded",
+            });
+            console.log("Trenutno na:", variantUrl);
         }
     }
-
-    console.log(
-        "products",
-        products[1].brand,
-        products[1].name,
-        products[1].url,
-    );
 
     await page.pause();
 });
