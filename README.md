@@ -1,3 +1,9 @@
 For now I have no idea what will be done here. I have some directions on how and what to do here, but I'm trying to do most of the stuff by hand as much as possible where I don't waste time on anything not useful or not that important, like UI design. I want to incorporate a lot of technology that is in use today in industries with the aim to learn it, understand it, and show that I understand it.
 
 My goal here is to implement a full system for data collection, data processing and storage. After that my goal is to implement a RAG system with which I can talk to it to retrieve data that I want from storage and give it the possibility to use some tooling like creating charts from received data and so on. For now, the only idea is that, but systems are here to be upgraded :)
+
+Run the test/scraping stuff:
+
+```bash
+npx playwright test tests/moj_test.spec.ts --project=firefox --headed
+```
