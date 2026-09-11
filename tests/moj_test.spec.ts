@@ -203,65 +203,72 @@ test("otvori stranicu", async ({ page }) => {
                     ? await promotionalPrice.innerText()
                     : "ERROR";
 
+            const stickSideBar =
+                await detailPage.getByTestId("sticky-side-bar");
+
+            const couponLocator = await stickSideBar
+                .locator("span")
+                .filter({ hasText: /s kodom/i })
+                .locator(":scope > span"); //find coupon by text "s kodom" because there is no id or anything :(
+
+            const coupon = (await couponLocator.count())
+                ? (await couponLocator.innerText()).trim()
+                : "";
+
             // const priceContainer = detailPage.locator(
             //     "#pdSelectedVariant #pd-price",
             // ); // There is more places where currency-variant appears so need to limit search to specific one
-            // const variantPriceOriginal = await priceContainer
-            //     .getByTestId("pd-price")
-            //     .innerText();
             // const variantCurrency = await priceContainer
             //     .getByTestId("currency-variant")
             //     .getAttribute("content");
 
-            // const stickSideBar =
-            //     await detailPage.getByTestId("sticky-side-bar");
-
-            // const couponLocator = await stickSideBar
-            //     .locator("span")
-            //     .filter({ hasText: /s kodom/i })
-            //     .locator(":scope > span"); //find coupon by text "s kodom" because there is no id or anything :(
-
-            // const coupon = (await couponLocator.count())
-            //     ? (await couponLocator.innerText()).trim()
+            // const couponPrice = coupon
+            //     ? (
+            //           await stickSideBar
+            //               .getByTestId("pd-price-wrapper")
+            //               .locator(
+            //                   ':scope > span[content]:not([data-testid="currency-variant"])',
+            //               )
+            //               .innerText()
+            //       ).trim()
             //     : "";
-
-            // const couponPrice = await stickSideBar
-            //     .getByTestId("pd-price-wrapper")
-            //     .locator(
-            //         ':scope > span[content]:not([data-testid="currency-variant"])',
-            //     )
-            //     .innerText();
-
-            // console.log(coupon); // coupon
             // console.log(
+            //     "VolumeText: ",
             //     volumeText,
-            //     "  ",
-            //     variantPriceOriginal,
-            //     " - kupon: ",
-            //     couponPrice,
-            //     "   ",
-            //     variantCurrency,
-            // ); // "100 ml"
-
+            //     "- nadopuna: ",
+            //     nadopuna,
+            //     "- gift: ",
+            //     giftWithPurchase,
+            //     "- shipping: ",
+            //     freeShipping,
+            //     "- promo:",
+            //     promotionalOffer,
+            //     "- original price:",
+            //     originalVolumePrice,
+            // );
+            // console.log(
+            //     " Product name ",
+            //     currentProduct.name,
+            //     " Product brand: ",
+            //     currentProduct.brand,
+            // );
             console.log(
-                "VolumeText: ",
-                volumeText,
-                "- nadopuna: ",
-                nadopuna,
-                "- gift: ",
-                giftWithPurchase,
-                "- shipping: ",
-                freeShipping,
-                "- promo:",
-                promotionalOffer,
-                "- original price:",
-                originalVolumePrice,
-            );
-            console.log(
-                " Product name ",
-                currentProduct.name,
                 " Product brand: ",
                 currentProduct.brand,
+                " Product name ",
+                currentProduct.name,
+                "\n",
+                "VolumeText: ",
+                volumeText,
+                "original price:",
+                originalVolumePrice,
+                "coupon:",
+                coupon,
+                // "Coupon price:",
+                // couponPrice,
+                // variantCurrency,
+                // "Coupon:",
+                // coupon,
             );
 
             //await detailPage.pause();
