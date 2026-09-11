@@ -94,6 +94,9 @@ test("otvori stranicu", async ({ page }) => {
     type ProductVariant = {
         volume: string;
         price: string;
+        filler: boolean;
+        currency: string;
+        coupon: boolean;
         couponPrice: string | null;
         couponCode: string | null;
         url: string;
@@ -155,7 +158,113 @@ test("otvori stranicu", async ({ page }) => {
             await detailPage.goto(variantUrl, {
                 waitUntil: "domcontentloaded",
             });
-            console.log("Trenutno na:", variantUrl);
+
+            const variantVolume = detailPage
+                .locator("#pdSelectedVariant")
+                .locator("span")
+                .filter({ hasText: /^\s*\d+(?:[.,]\d+)?\s*ml\b/i });
+
+            const text = (await variantVolume.count())
+                ? (await variantVolume.innerText()).trim()
+                : "";
+
+            const volumeText = text.match(/[\d.,]+\s*ml/i)?.[0] ?? "";
+            const nadopuna = /nadopuna/i.test(text);
+
+            const originalPriceAndVolume =
+                detailPage.locator("#pdSelectedVariant");
+
+            const variantText = (await originalPriceAndVolume.count())
+                ? await originalPriceAndVolume.innerText()
+                : "";
+
+            const giftWithPurchase = /poklon uz kupnju/i.test(variantText);
+            const freeShipping = /besplatna dostava/i.test(variantText);
+            const promotionalOffer = /akcija/i.test(variantText);
+
+            const regularPrice = originalPriceAndVolume.getByTestId("pd-price");
+
+            const promotionalPrice = detailPage
+                .getByTestId("sticky-side-bar")
+                .locator("#pdSelectedVariant + div")
+                .getByTestId("pd-price-wrapper")
+                .locator('span[content]:not([data-testid="currency-variant"])');
+
+            const unavailable = await detailPage
+                .getByTestId("product-specifications")
+                .getByText(/trenutno nedostupno/i)
+                .count();
+
+            const originalVolumePrice = unavailable
+                ? "Trenutno nedostupno"
+                : (await regularPrice.count()) === 1
+                  ? await regularPrice.innerText()
+                  : (await promotionalPrice.count()) === 1
+                    ? await promotionalPrice.innerText()
+                    : "ERROR";
+
+            // const priceContainer = detailPage.locator(
+            //     "#pdSelectedVariant #pd-price",
+            // ); // There is more places where currency-variant appears so need to limit search to specific one
+            // const variantPriceOriginal = await priceContainer
+            //     .getByTestId("pd-price")
+            //     .innerText();
+            // const variantCurrency = await priceContainer
+            //     .getByTestId("currency-variant")
+            //     .getAttribute("content");
+
+            // const stickSideBar =
+            //     await detailPage.getByTestId("sticky-side-bar");
+
+            // const couponLocator = await stickSideBar
+            //     .locator("span")
+            //     .filter({ hasText: /s kodom/i })
+            //     .locator(":scope > span"); //find coupon by text "s kodom" because there is no id or anything :(
+
+            // const coupon = (await couponLocator.count())
+            //     ? (await couponLocator.innerText()).trim()
+            //     : "";
+
+            // const couponPrice = await stickSideBar
+            //     .getByTestId("pd-price-wrapper")
+            //     .locator(
+            //         ':scope > span[content]:not([data-testid="currency-variant"])',
+            //     )
+            //     .innerText();
+
+            // console.log(coupon); // coupon
+            // console.log(
+            //     volumeText,
+            //     "  ",
+            //     variantPriceOriginal,
+            //     " - kupon: ",
+            //     couponPrice,
+            //     "   ",
+            //     variantCurrency,
+            // ); // "100 ml"
+
+            console.log(
+                "VolumeText: ",
+                volumeText,
+                "- nadopuna: ",
+                nadopuna,
+                "- gift: ",
+                giftWithPurchase,
+                "- shipping: ",
+                freeShipping,
+                "- promo:",
+                promotionalOffer,
+                "- original price:",
+                originalVolumePrice,
+            );
+            console.log(
+                " Product name ",
+                currentProduct.name,
+                " Product brand: ",
+                currentProduct.brand,
+            );
+
+            //await detailPage.pause();
         }
     }
 
