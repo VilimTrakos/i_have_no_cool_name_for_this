@@ -159,6 +159,11 @@ test("otvori stranicu", async ({ page }) => {
                 waitUntil: "domcontentloaded",
             });
 
+            // wait for page to render, count() doesn't wait
+            await detailPage.getByTestId("pd-price-wrapper").first().waitFor({
+                state: "visible",
+            });
+
             const variantVolume = detailPage
                 .locator("#pdSelectedVariant")
                 .locator("span")
@@ -215,23 +220,53 @@ test("otvori stranicu", async ({ page }) => {
                 ? (await couponLocator.innerText()).trim()
                 : "";
 
-            // const priceContainer = detailPage.locator(
-            //     "#pdSelectedVariant #pd-price",
-            // ); // There is more places where currency-variant appears so need to limit search to specific one
-            // const variantCurrency = await priceContainer
-            //     .getByTestId("currency-variant")
-            //     .getAttribute("content");
+            const couponPrice = coupon
+                ? (
+                      await stickSideBar
+                          .getByTestId("pd-price-wrapper")
+                          .locator(":scope > span[content]:not([data-testid])")
+                          .first()
+                          .innerText()
+                  ).trim()
+                : "";
+            // find discount by text "Aktualna cijena", then the span with "%"
+            const discountLocator = stickSideBar
+                .locator("span")
+                .filter({ hasText: /aktualna cijena/i })
+                .locator(":scope > span")
+                .filter({ hasText: /%/ });
 
-            // const couponPrice = coupon
-            //     ? (
-            //           await stickSideBar
-            //               .getByTestId("pd-price-wrapper")
-            //               .locator(
-            //                   ':scope > span[content]:not([data-testid="currency-variant"])',
-            //               )
-            //               .innerText()
-            //       ).trim()
-            //     : "";
+            const couponPercentageOff = (await discountLocator.count())
+                ? (await discountLocator.first().innerText()).trim()
+                : "";
+
+            const specifications = detailPage.getByTestId(
+                "product-specifications",
+            );
+
+            // find span with "/ 100 ml", take text before "/"
+            const pricePer100Ml = (
+                (
+                    await specifications
+                        .locator(":scope > span")
+                        .filter({ hasText: /\/\s*100\s*ml/i })
+                        .allInnerTexts()
+                )[0] ?? ""
+            )
+                .split("/")[0]
+                .trim();
+
+            // find shop code by text "Kod:"
+            const shopCode = (
+                (
+                    await specifications
+                        .locator(":scope > span")
+                        .filter({ hasText: /kod:/i })
+                        .allInnerTexts()
+                )[0] ?? ""
+            )
+                .replace(/kod:/i, "")
+                .trim();
             // console.log(
             //     "VolumeText: ",
             //     volumeText,
@@ -264,11 +299,20 @@ test("otvori stranicu", async ({ page }) => {
                 originalVolumePrice,
                 "coupon:",
                 coupon,
-                // "Coupon price:",
-                // couponPrice,
+                "Coupon price:",
+                couponPrice,
+                "Discount:",
+                couponPercentageOff,
                 // variantCurrency,
                 // "Coupon:",
                 // coupon,
+
+                "\n",
+                "Price per 100ML: ",
+                pricePer100Ml,
+                "Product code: ",
+                shopCode,
+                "\n",
             );
 
             //await detailPage.pause();
